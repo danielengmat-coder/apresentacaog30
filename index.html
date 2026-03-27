@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G30 PRO - Ecossistema Interativo</title>
+    
+    <!-- Carregar o Tailwind CDN PRIMEIRO para disponibilizar o objeto 'tailwind' -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Configuração colocada DEPOIS do script do Tailwind -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#fff6ec',
+                            100: '#ffead3',
+                            200: '#ffd0a5',
+                            300: '#ffb06d',
+                            400: '#ff882b',
+                            500: '#FF5C00', /* <-- Laranja vibrante exato do logotipo G30 */
+                            600: '#e64900',
+                            700: '#bf3600',
+                            800: '#992b00',
+                            900: '#7d2502',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Warm Neutrals & Tech Brand Orange -->
+    <!-- Application Structure Plan: The SPA is structured as an interactive journey mirroring the dealer's funnel and operational flow. It starts with the overall Methodology (The foundation), moves to Top of Funnel (Leadway - Marketing), then Middle of Funnel (CarChat - Conversion), details the Core Brain (Gideão IA - Operations), and concludes with Deliverables. This dashboard-style narrative allows users to understand not just the features, but *where* they fit in the dealership lifecycle. -->
+    <!-- Visualization & Content Choices: 
+         - Metodologia: CSS Grid cards -> Inform -> Easy to scan 4 pillars.
+         - Leadway: Chart.js Line/Doughnut & Interactive form -> Compare/Inform -> Tangibilizes the "Dashboard" and "Copy Generator" features.
+         - CarChat: HTML/CSS Kanban Mockup -> Organize -> Visually demonstrates the lead management claim without complex backend.
+         - Gideão IA: Interactive HTML/CSS Node Map -> Relationships -> Shows the central orchestrator delegating to 5 sub-specialists (NO SVG used).
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    
+    <style>
+        body { background-color: #f8fafc; /* Tailwind slate-50 - Light background strictly enforced */ }
+        
+        /* Strict Chart Container Styling */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+            padding: 1rem;
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        
+        /* Gideão Node Map Styles */
+        .node-map { position: relative; width: 300px; height: 300px; margin: 0 auto; }
+        .node-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100px; height: 100px; background: #FF5C00; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; z-index: 10; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transition: transform 0.2s;}
+        .node-center:hover { transform: translate(-50%, -50%) scale(1.05); }
+        .node-satellite { position: absolute; width: 80px; height: 80px; background: white; border: 2px solid #e2e8f0; color: #1e293b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; text-align: center; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .node-satellite:hover, .node-satellite.active { border-color: #FF5C00; background: #fff6ec; color: #FF5C00; font-weight: bold; transform: scale(1.1); }
+        
+        /* Positioning satellites circularly */
+        .sat-1 { top: 0%; left: 50%; transform: translate(-50%, 0); }
+        .sat-2 { top: 30%; left: 100%; transform: translate(-100%, -50%); }
+        .sat-3 { top: 80%; left: 80%; transform: translate(-50%, -50%); }
+        .sat-4 { top: 80%; left: 20%; transform: translate(-50%, -50%); }
+        .sat-5 { top: 30%; left: 0%; transform: translate(0, -50%); }
+
+        /* Kanban Columns */
+        .kanban-col { background: #f1f5f9; border-radius: 0.5rem; padding: 1rem; min-height: 300px; }
+        .kanban-card { background: white; padding: 1rem; border-radius: 0.375rem; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); margin-bottom: 0.75rem; border-left: 4px solid #FF5C00; cursor: pointer; transition: transform 0.1s; }
+        .kanban-card:hover { transform: translateY(-2px); }
+    </style>
+</head>
+<body class="text-slate-800 font-sans antialiased">
+
+    <!-- Navigation -->
+    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <span class="text-2xl font-black text-brand-500 tracking-tighter">G30 PRO</span>
+                </div>
+                <div class="hidden md:flex items-center space-x-8 text-sm font-medium text-slate-600">
+                    <a href="#metodologia" class="hover:text-brand-500 transition-colors">1. Metodologia</a>
+                    <a href="#leadway" class="hover:text-brand-500 transition-colors">2. Leadway</a>
+                    <a href="#carchat" class="hover:text-brand-500 transition-colors">3. CarChat</a>
+                    <a href="#gideao" class="hover:text-brand-500 transition-colors">4. Gideão IA</a>
+                    <a href="#entregaveis" class="hover:text-brand-500 transition-colors">Entregáveis</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="bg-brand-500 text-white py-20 px-4 relative overflow-hidden">
+        <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 20px 20px;"></div>
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            <span class="inline-block py-1 px-3 rounded-full bg-brand-600 text-white text-sm font-semibold mb-4 border border-brand-400">Ecossistema Definitivo</span>
+            <h1 class="text-4xl md:text-6xl font-extrabold mb-6 tracking-tight">O Fim do "Achismo" em<br><span class="text-slate-900">Lojas de Veículos</span></h1>
+            <p class="text-lg md:text-xl text-white mb-8 max-w-2xl mx-auto">
+                Substitua o esforço braçal por processos validados e Inteligência Artificial. Transforme sua loja tradicional em uma operação escalável, com previsibilidade de vendas e alta margem de lucro.
+            </p>
+            <div class="flex justify-center gap-4">
+                <a href="#metodologia" class="bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 px-6 rounded-lg transition-colors">Explorar o Ecossistema &#8595;</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-24">
+
+        <!-- Section 1: Metodologia -->
+        <section id="metodologia" class="scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-900 mb-4">1. A Metodologia de Gestão</h2>
+                <p class="text-slate-600 max-w-3xl mx-auto">
+                    Nesta seção, apresentamos a base do G30 Pro. Antes da tecnologia, é preciso estruturar os 4 pilares fundamentais da sua loja. Clique nos cartões abaixo para entender as frentes acompanhadas pelos nossos especialistas.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Cards interactivos -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand-300 transition-all group cursor-default">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition-transform">&#128226;</div>
+                    <h3 class="font-bold text-lg mb-2 text-slate-900">Marketing</h3>
+                    <p class="text-slate-600 text-sm">Captação previsível de leads, automação e presença digital de alta conversão.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand-300 transition-all group cursor-default">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition-transform">&#128188;</div>
+                    <h3 class="font-bold text-lg mb-2 text-slate-900">Comercial</h3>
+                    <p class="text-slate-600 text-sm">Estruturação de funil de vendas, scripts de atendimento, cadência e treinamento.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand-300 transition-all group cursor-default">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition-transform">&#128200;</div>
+                    <h3 class="font-bold text-lg mb-2 text-slate-900">Adm/Financeiro</h3>
+                    <p class="text-slate-600 text-sm">Gestão de caixa, precificação inteligente, margem de lucro e KPIs.</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-brand-300 transition-all group cursor-default">
+                    <div class="text-4xl mb-4 group-hover:scale-110 transition-transform">&#9881;&#65039;</div>
+                    <h3 class="font-bold text-lg mb-2 text-slate-900">Operações</h3>
+                    <p class="text-slate-600 text-sm">Compras eficientes, preparação estética/mecânica, giro de estoque e entrega.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 2: Leadway -->
+        <section id="leadway" class="scroll-mt-20 pt-10 border-t border-slate-200">
+            <div class="mb-12">
+                <span class="text-brand-500 font-bold tracking-wider text-sm uppercase">Topo de Funil</span>
+                <h2 class="text-3xl font-bold text-slate-900 mt-2 mb-4">2. Plataforma Leadway</h2>
+                <p class="text-slate-600 max-w-3xl">
+                    Aqui você visualiza a agência de publicidade interna da sua loja movida a IA. O Leadway atrai os leads controlando o tráfego e gerando conteúdo. Interaja com o painel abaixo para ver como simplificamos a visão executiva e criamos textos persuasivos em segundos.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <!-- Dashboard Mockup -->
+                <div class="space-y-6">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <h4 class="font-bold text-slate-800 mb-4 flex items-center justify-between">
+                            Dashboard de Performance
+                            <span class="text-xs font-normal bg-green-100 text-green-700 px-2 py-1 rounded">Tempo Real</span>
+                        </h4>
+                        <div class="chart-container">
+                            <canvas id="roiChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Copywriter Mockup -->
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+                    <h4 class="font-bold text-slate-800 mb-2">&#9997; Geração Automática de Copywriting</h4>
+                    <p class="text-sm text-slate-500 mb-6">Selecione o tom desejado para gerar o texto do anúncio instantaneamente.</p>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Veículo</label>
+                        <select class="w-full border-slate-300 rounded-md shadow-sm p-2 border bg-slate-50" disabled>
+                            <option>BMW 320i M Sport 2022</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-slate-700 mb-1">Tom da Mensagem</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="generateCopy('promocional')" class="copy-btn py-2 border rounded-md text-sm hover:bg-brand-50 hover:border-brand-300 focus:ring-2 ring-brand-500">Promocional</button>
+                            <button onclick="generateCopy('premium')" class="copy-btn py-2 border rounded-md text-sm hover:bg-brand-50 hover:border-brand-300 focus:ring-2 ring-brand-500">Premium</button>
+                            <button onclick="generateCopy('urgencia')" class="copy-btn py-2 border rounded-md text-sm hover:bg-brand-50 hover:border-brand-300 focus:ring-2 ring-brand-500">Urgência</button>
+                            <button onclick="generateCopy('beneficios')" class="copy-btn py-2 border rounded-md text-sm hover:bg-brand-50 hover:border-brand-300 focus:ring-2 ring-brand-500">Benefícios</button>
+                        </div>
+                    </div>
+
+                    <div class="mt-auto bg-slate-50 p-4 rounded-md border border-slate-200 min-h-[150px] relative">
+                        <span class="absolute top-2 right-2 text-xs text-slate-400">Preview</span>
+                        <p id="copyOutput" class="text-sm text-slate-700 italic whitespace-pre-line">
+                            Selecione um tom acima para gerar a copy gerada pela IA...
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: CarChat -->
+        <section id="carchat" class="scroll-mt-20 pt-10 border-t border-slate-200">
+            <div class="mb-12">
+                <span class="text-brand-500 font-bold tracking-wider text-sm uppercase">Meio de Funil</span>
+                <h2 class="text-3xl font-bold text-slate-900 mt-2 mb-4">3. CarChat: Atendimento 24/7</h2>
+                <p class="text-slate-600 max-w-3xl">
+                    Se o Leadway atrai, o CarChat agenda. Esta seção demonstra como nossa IA conversacional organiza os leads em um Kanban visual e utiliza o "DNA" específico da sua loja (políticas, pagamentos) para agir como seu melhor vendedor, focando no agendamento da visita física.
+                </p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Config DNA -->
+                <div class="col-span-1 bg-slate-800 text-slate-100 p-6 rounded-xl shadow-lg">
+                    <h4 class="font-bold text-lg mb-4 text-white flex items-center gap-2">
+                        <span>&#129604;</span> DNA da Loja (Treinamento IA)
+                    </h4>
+                    <ul class="space-y-4 text-sm">
+                        <li class="pb-2 border-b border-slate-700">
+                            <span class="block text-slate-400 text-xs mb-1">Formas de Pagamento</span>
+                            <div class="flex flex-wrap gap-1">
+                                <span class="bg-slate-700 px-2 py-0.5 rounded text-xs">Pix</span>
+                                <span class="bg-slate-700 px-2 py-0.5 rounded text-xs">Cartão</span>
+                                <span class="bg-slate-700 px-2 py-0.5 rounded text-xs">Financiamento</span>
+                            </div>
+                        </li>
+                        <li class="pb-2 border-b border-slate-700">
+                            <span class="block text-slate-400 text-xs mb-1">Regras de Agendamento</span>
+                            <span class="text-brand-400">Antecedência mínima de 2 horas</span>
+                        </li>
+                        <li class="pb-2 border-b border-slate-700">
+                            <span class="block text-slate-400 text-xs mb-1">Diferenciais (Para gatilhos)</span>
+                            <span class="text-brand-400">Garantia de 6 meses no motor</span>
+                        </li>
+                    </ul>
+                    <div class="mt-6 p-3 bg-brand-500/20 rounded-lg text-xs border border-brand-500/50">
+                        <strong class="text-brand-400">Missão da IA:</strong> Aplicar metodologia G30, aquecer o lead e agendar visita física. Não apenas responder dúvidas.
+                    </div>
+                </div>
+
+                <!-- Kanban Mockup -->
+                <div class="col-span-1 lg:col-span-2 grid grid-cols-3 gap-4 overflow-x-auto pb-4">
+                    <div class="kanban-col">
+                        <h5 class="font-bold text-sm text-slate-600 mb-4 flex justify-between">Novo Lead <span class="bg-slate-200 px-2 rounded-full">2</span></h5>
+                        <div class="kanban-card">
+                            <div class="text-sm font-bold">Carlos Silva</div>
+                            <div class="text-xs text-slate-500">Origem: Instagram</div>
+                            <div class="mt-2 text-xs bg-yellow-100 text-yellow-800 inline-block px-1 rounded">IA Iniciando...</div>
+                        </div>
+                        <div class="kanban-card">
+                            <div class="text-sm font-bold">Mariana Costa</div>
+                            <div class="text-xs text-slate-500">Origem: WhatsApp</div>
+                        </div>
+                    </div>
+                    
+                    <div class="kanban-col">
+                        <h5 class="font-bold text-sm text-slate-600 mb-4 flex justify-between">Em Atendimento (IA) <span class="bg-slate-200 px-2 rounded-full">1</span></h5>
+                        <div class="kanban-card border-l-yellow-400">
+                            <div class="text-sm font-bold">Roberto Alves</div>
+                            <div class="text-xs text-slate-500">Interesse: SUV Familiar</div>
+                            <div class="mt-2 text-xs text-slate-600 italic">"Gostaria de saber se aceita consórcio..."</div>
+                        </div>
+                    </div>
+
+                    <div class="kanban-col">
+                        <h5 class="font-bold text-sm text-slate-600 mb-4 flex justify-between">Visita Agendada <span class="bg-green-200 text-green-800 px-2 rounded-full">1</span></h5>
+                        <div class="kanban-card border-l-green-500 bg-green-50">
+                            <div class="text-sm font-bold text-green-900">Ana Beatriz</div>
+                            <div class="text-xs text-green-700">Hoje às 14:30</div>
+                            <div class="mt-2 text-xs bg-green-200 text-green-800 inline-block px-1 rounded font-bold">Pronto p/ Fechamento</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Gideão IA -->
+        <section id="gideao" class="scroll-mt-20 pt-10 border-t border-slate-200">
+            <div class="mb-12 text-center">
+                <span class="text-brand-500 font-bold tracking-wider text-sm uppercase">O Cérebro da Operação</span>
+                <h2 class="text-3xl font-bold text-slate-900 mt-2 mb-4">4. Gideão IA: A inteligência da G30</h2>
+                <p class="text-slate-600 max-w-2xl mx-auto">
+                    O Gideão delega tarefas operacionais para 5 especialistas. Interaja com o organograma clicando nos círculos para descobrir como cada especialista em IA atua na sua loja.
+                </p>
+            </div>
+
+            <div class="flex flex-col md:flex-row items-center justify-center gap-12">
+                <!-- Node Map -->
+                <div class="node-map">
+                    <div class="node-center" onclick="showGideaoDetail('central')">GIDEÃO<br>IA</div>
+                    <div class="node-satellite sat-1" onclick="showGideaoDetail('estoque')">&#128230;<br>Estoque</div>
+                    <div class="node-satellite sat-2" onclick="showGideaoDetail('compras')">&#128269;<br>Compras</div>
+                    <div class="node-satellite sat-3" onclick="showGideaoDetail('marketing')">&#128227;<br>Mkt</div>
+                    <div class="node-satellite sat-4" onclick="showGideaoDetail('financas')">&#128176;<br>Finanças</div>
+                    <div class="node-satellite sat-5" onclick="showGideaoDetail('vendas')">&#129309;<br>Vendas</div>
+                </div>
+
+                <!-- Info Panel -->
+                <div id="gideaoInfoPanel" class="w-full max-w-md bg-white p-8 rounded-xl border-2 border-brand-200 shadow-md min-h-[250px] flex flex-col justify-center transition-all">
+                    <div class="text-4xl mb-4 text-brand-500">&#129416;</div>
+                    <h4 class="text-xl font-bold text-slate-900 mb-2">Selecione um Agente</h4>
+                    <p class="text-slate-600">
+                        Clique no Gideão ou em um de seus especialistas ao lado para ver as funções delegadas no ecossistema da loja.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Resumo Entregáveis -->
+        <section id="entregaveis" class="scroll-mt-20 pt-10 border-t border-slate-200 pb-12">
+             <div class="bg-brand-50 p-8 md:p-12 rounded-2xl">
+                <h2 class="text-2xl md:text-3xl font-bold text-slate-900 mb-8 text-center">Resumo dos Entregáveis G30 Pro</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="flex items-start gap-3">
+                        <div class="text-brand-500 font-bold text-xl">&#10003;</div>
+                        <div>
+                            <h5 class="font-bold text-slate-800">Acompanhamento Semanal</h5>
+                            <p class="text-sm text-slate-600">Encontros guiados por Especialistas para execução dos 4 pilares.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="text-brand-500 font-bold text-xl">&#10003;</div>
+                        <div>
+                            <h5 class="font-bold text-slate-800">Ecossistema G30.ai</h5>
+                            <p class="text-sm text-slate-600">Acesso total ao Leadway (Tráfego) e CarChat (Atendimento/Kanban).</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="text-brand-500 font-bold text-xl">&#10003;</div>
+                        <div>
+                            <h5 class="font-bold text-slate-800">Superagente Gideão</h5>
+                            <p class="text-sm text-slate-600">Equipe de 5 especialistas de IA automatizando sua rotina.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="text-brand-500 font-bold text-xl">&#10003;</div>
+                        <div>
+                            <h5 class="font-bold text-slate-800">Capacitação Contínua</h5>
+                            <p class="text-sm text-slate-600">Treinamentos técnicos de vendas e estratégicos de gestão.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="text-brand-500 font-bold text-xl">&#10003;</div>
+                        <div>
+                            <h5 class="font-bold text-slate-800">Comunidade de Lojistas</h5>
+                            <p class="text-sm text-slate-600">Networking exclusivo com os maiores lojistas do Brasil.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-900 text-slate-400 py-8 text-center">
+        <p class="text-sm">&copy; 2026 G30 Pro. Demonstração Interativa.</p>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // --- 1. State & Data Management ---
+        const copyData = {
+            promocional: "🔥 OFERTA IMPERDÍVEL!\n\nBMW 320i M Sport 2022 com preço abaixo da FIPE. Bônus de R$ 5.000 na valorização do seu usado. Aprovação imediata!\n\n👉 Clique em 'Saiba Mais' e garanta o desconto hoje.",
+            premium: "💎 EXCLUSIVIDADE E LUXO.\n\nSinta a performance pura da BMW 320i M Sport 2022. Acabamento impecável, design arrojado e tecnologia de ponta para quem exige o melhor.\n\nAgende seu test drive premium agora.",
+            urgencia: "⏳ ÚLTIMA UNIDADE NO ESTOQUE!\n\nEsta BMW 320i M Sport 2022 acabou de entrar e já tem 3 pessoas interessadas. Se você piscar, perde a chance. Condição especial válida só até amanhã!\n\nChame no WhatsApp agora para reservar.",
+            beneficios: "✅ SEGURANÇA E CONFIANÇA.\n\nCompre sua BMW 320i M Sport 2022 com a gente e leve: IPVA pago, garantia de 6 meses no motor e câmbio, e laudo cautelar 100% aprovado. Sem surpresas.\n\nFale com nosso time."
+        };
+
+        const gideaoData = {
+            central: {
+                icon: "&#129416;",
+                title: "Gideão IA (O Maestro)",
+                text: "Ouve, analisa e interpreta a demanda do lojista ou vendedor, transformando solicitações em ações estratégicas. Ele coordena as tecnologias avançadas da G30.ai e delega tarefas instantaneamente."
+            },
+            estoque: {
+                icon: "&#128230;",
+                title: "Especialista de Estoque",
+                text: "Verifica e consulta a disponibilidade interna de veículos instantaneamente, otimizando o tempo de resposta da equipe na frente do cliente."
+            },
+            compras: {
+                icon: "&#128269;",
+                title: "Especialista de Compras",
+                text: "Busca oportunidades e garimpa opções de reposição de estoque, totalmente integrado com a plataforma Auto Avaliar para garantir margem."
+            },
+            marketing: {
+                icon: "&#128227;",
+                title: "Especialista de Marketing",
+                text: "O braço que operacionaliza o Leadway. Cria roteiros, gera imagens em ambientes virtuais e estrutura campanhas de tração de vendas."
+            },
+            financas: {
+                icon: "&#128176;",
+                title: "Especialista de Finanças",
+                text: "Realiza simulações financeiras rápidas e gera relatórios para facilitar a aprovação de crédito e fechar negócio na mesa."
+            },
+            vendas: {
+                icon: "&#129309;",
+                title: "Especialista de Vendas",
+                text: "Auxilia o time comercial na gestão dos leads gerados e geridos pelo CarChat, sugerindo táticas de fechamento e follow-up certeiras."
+            }
+        };
+
+        // --- 2. Chart.js Initialization ---
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctxROI = document.getElementById('roiChart').getContext('2d');
+            
+            // ROI Mock Data Chart
+            new Chart(ctxROI, {
+                type: 'line',
+                data: {
+                    labels: ['Sem 1', 'Sem 2', 'Sem 3', 'Sem 4'],
+                    datasets: [
+                        {
+                            label: 'Custo por Lead (R$)',
+                            data: [35, 28, 22, 18],
+                            borderColor: '#ef4444',
+                            backgroundColor: 'transparent',
+                            yAxisID: 'y',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'ROI (%)',
+                            data: [120, 180, 250, 310],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            fill: true,
+                            yAxisID: 'y1',
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { position: 'bottom' },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed.y !== null) {
+                                        label += context.datasetIndex === 0 ? 'R$ ' + context.parsed.y : context.parsed.y + '%';
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'CPL (R$)' } },
+                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'ROI (%)' } }
+                    }
+                }
+            });
+        });
+
+        // --- 3. Interaction Logic ---
+        
+        // Leadway Copy Generator
+        function generateCopy(tone) {
+            // Reset buttons
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.classList.remove('bg-brand-500', 'text-white');
+                btn.classList.add('bg-white', 'text-slate-800');
+            });
+            // Highlight selected
+            event.target.classList.remove('bg-white', 'text-slate-800');
+            event.target.classList.add('bg-brand-500', 'text-white');
+            
+            // Output text with typewriter effect simulation
+            const outputBox = document.getElementById('copyOutput');
+            outputBox.innerHTML = '<span class="text-brand-500">⏳ Gideão IA gerando...</span>';
+            
+            setTimeout(() => {
+                outputBox.innerText = copyData[tone];
+            }, 600);
+        }
+
+        // Gideão Node Map Interactivity
+        function showGideaoDetail(agentKey) {
+            // Remove active classes
+            document.querySelectorAll('.node-satellite').forEach(node => node.classList.remove('active'));
+            
+            // Add active class if it's a satellite
+            if(event.target.classList.contains('node-satellite')) {
+                event.target.classList.add('active');
+            }
+
+            const data = gideaoData[agentKey];
+            const panel = document.getElementById('gideaoInfoPanel');
+            
+            // Update panel content
+            panel.innerHTML = `
+                <div class="text-4xl mb-4 text-brand-500">${data.icon}</div>
+                <h4 class="text-xl font-bold text-slate-900 mb-2">${data.title}</h4>
+                <p class="text-slate-600 leading-relaxed">${data.text}</p>
+            `;
+            
+            // Simple animation bump
+            panel.style.transform = 'scale(0.98)';
+            setTimeout(() => panel.style.transform = 'scale(1)', 100);
+        }
+    </script>
+</body>
+</html>
